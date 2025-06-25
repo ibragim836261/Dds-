@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔐 Проверка удостоверений</title>
+    <style>
+        /* 🌈 Основные стили */
+        :root {
+            --primary: #2b2d42;
+            --secondary: #8d99ae;
+            --accent: #ef233c;
+            --light: #edf2f4;
+            --dark: #1a1a1a;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+            color: var(--dark);
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        /* 🔍 Секция поиска */
+        .search-section {
+            padding: 25px;
+            background: linear-gradient(to right, #2b2d42, #4a4e69);
+            color: white;
+        }
+        
+        .input-group {
+            display: flex;
+            margin-bottom: 15px;
+        }
+        
+        input {
+            flex: 1;
+            padding: 12px 15px;
+            border: none;
+            border-radius: 5px 0 0 5px;
+            font-family: inherit;
+            font-size: 16px;
+        }
+        
+        button {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 0 20px;
+            border-radius: 0 5px 5px 0;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            background-color: #d90429;
+        }
+        
+        /* 🪪 Стиль удостоверения (точный как у вас) */
+        .document-card {
+            display: none;
+            padding: 30px;
+            background: white;
+            border: 1px solid #ddd;
+            position: relative;
+        }
+        
+        .document-header {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .document-field {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed #eee;
+            display: flex;
+        }
+        
+        .field-label {
+            font-weight: bold;
+            min-width: 150px;
+        }
+        
+        .field-value {
+            flex: 1;
+        }
+        
+        .document-divider {
+            height: 1px;
+            background: linear-gradient(to right, transparent, #000, transparent);
+            margin: 25px 0;
+        }
+        
+        .document-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+        
+        .doc-btn {
+            padding: 8px 20px;
+            border: 1px solid var(--primary);
+            border-radius: 3px;
+            background: none;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        
+        .doc-btn:hover {
+            background-color: #f0f0f0;
+        }
+        
+        /* 🎨 Дополнительные элементы */
+        .error-message {
+            color: var(--accent);
+            text-align: center;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+        
+        .add-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin-top: 20px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        /* Модальное окно */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            padding: 25px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.3);
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: inherit;
+        }
+        
+        .generate-btn {
+            background-color: var(--accent);
+            color: white;
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+        
+        .code-display {
+            font-family: monospace;
+            font-size: 18px;
+            text-align: center;
+            margin-top: 15px;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <section class="search-section">
+            <h2>ПРОВЕРКА УДОСТОВЕРЕНИЯ</h2>
+            <div class="input-group">
+                <input type="text" id="searchInput" placeholder="Введите код удостоверения">
+                <button onclick="searchDocument()">Проверить</button>
+            </div>
+            <p id="errorMessage" class="error-message"></p>
+        </section>
+        
+        <section id="documentResult" class="document-card">
+            <div class="document-header">УДОСТОВЕРЕНИЕ ЛИЧНОСТИ</div>
+            
+            <div class="document-field">
+                <div class="field-label">ФИО:</div>
+                <div class="field-value" id="docName">—</div>
+            </div>
+            
+            <div class="document-field">
+                <div class="field-label">Дата рождения:</div>
+                <div class="field-value" id="docBirth">—</div>
+            </div>
+            
+            <div class="document-field">
+                <div class="field-label">Номер удостоверения:</div>
+                <div class="field-value" id="docNumber">—</div>
+            </div>
+            
+            <div class="document-field">
+                <div class="field-label">Дата выдачи:</div>
+                <div class="field-value" id="docDate">—</div>
+            </div>
+            
+            <div class="document-divider"></div>
+            
+            <div class="document-buttons">
+                <button class="doc-btn">ПОДТВЕРДИТЬ</button>
+                <button class="doc-btn">ПРЕДЪЯВИТЬ</button>
+            </div>
+        </section>
+        
+        <button class="add-btn" onclick="openModal()">+ Добавить удостоверение</button>
+    </div>
+    
+    <!-- Модальное окно добавления -->
+    <div class="modal" id="addModal">
+        <div class="modal-content">
+            <h2>Добавить новое удостоверение</h2>
+            
+            <div class="form-group">
+                <label for="name">ФИО:</label>
+                <input type="text" id="name" placeholder="Мирзоев Ибрагим Мирзаевич">
+            </div>
+            
+            <div class="form-group">
+                <label for="birth">Дата рождения:</label>
+                <input type="text" id="birth" placeholder="06.01.2013">
+            </div>
+            
+            <div class="form-group">
+                <label for="number">Номер удостоверения:</label>
+                <input type="text" id="number" placeholder="AB638292">
+            </div>
+            
+            <div class="form-group">
+                <label for="date">Дата выдачи:</label>
+                <input type="text" id="date" placeholder="21.04.2025">
+            </div>
+            
+            <button class="generate-btn" onclick="addDocument()">Сгенерировать код</button>
+            
+            <div id="generatedCode" class="code-display"></div>
+        </div>
+    </div>
+
+    <!-- 📜 JavaScript -->
+    <script>
+        // 📦 База данных (из localStorage или новая)
+        let documents = JSON.parse(localStorage.getItem('documents')) || {
+            "IBRA-1234": {
+                name: "Мирзоев Ибрагим Мирзаевич",
+                birth: "06.01.2013",
+                number: "AB638292",
+                date: "21.04.2025"
+            }
+        };
+        
+        // 🔍 Поиск удостоверения
+        function searchDocument() {
+            const input = document.getElementById("searchInput").value.trim().toUpperCase();
+            const doc = documents[input];
+            const resultDiv = document.getElementById("documentResult");
+            const errorP = document.getElementById("errorMessage");
+            
+            if (doc) {
+                document.getElementById("docName").textContent = doc.name;
+                document.getElementById("docBirth").textContent = doc.birth;
+                document.getElementById("docNumber").textContent = doc.number;
+                document.getElementById("docDate").textContent = doc.date;
+                resultDiv.style.display = "block";
+                errorP.textContent = "";
+            } else {
+                resultDiv.style.display = "none";
+                errorP.textContent = "Удостоверение с таким кодом не найдено!";
+            }
+        }
+        
+        // ➕ Добавление удостоверения
+        function addDocument() {
+            const name = document.getElementById("name").value.trim();
+            const birth = document.getElementById("birth").value.trim();
+            const number = document.getElementById("number").value.trim();
+            const date = document.getElementById("date").value.trim();
+            
+            if (!name || !birth || !number || !date) {
+                alert("Заполните все поля!");
+                return;
+            }
+            
+            // Генерация кода (формат: IBRA-XXXX)
+            const code = "IBRA-" + Math.floor(1000 + Math.random() * 9000);
+            
+            // Добавление в базу
+            documents[code] = { name, birth, number, date };
+            localStorage.setItem('documents', JSON.stringify(documents));
+            
+            // Показ сгенерированного кода
+            document.getElementById("generatedCode").innerHTML = `
+                <strong>Удостоверение добавлено!</strong><br>
+                Код для проверки: <span style="color: var(--accent)">${code}</span>
+            `;
+        }
+        
+        // 🪟 Управление модальным окном
+        function openModal() {
+            document.getElementById("addModal").style.display = "flex";
+            // Очищаем поля при открытии
+            document.getElementById("name").value = "";
+            document.getElementById("birth").value = "";
+            document.getElementById("number").value = "";
+            document.getElementById("date").value = "";
+            document.getElementById("generatedCode").innerHTML = "";
+        }
+        
+        function closeModal() {
+            document.getElementById("addModal").style.display = "none";
+        }
+        
+        // Закрытие модального окна при клике вне его
+        window.onclick = function(event) {
+            if (event.target == document.getElementById("addModal")) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html>
